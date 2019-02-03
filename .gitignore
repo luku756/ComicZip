@@ -259,3 +259,5 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+/ComicZip/maid
+/ComicZip/[쿨교신자] 코바야시네의 메이드래곤
