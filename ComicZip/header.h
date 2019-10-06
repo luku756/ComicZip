@@ -20,3 +20,5 @@ using namespace std;
 
 void zipFolder(string path, string name);
 string findFileList(string path, string name);
+bool badNameCheck(string filename);
+void nameChange(vector<string> allNameList, vector<string> badNameList, string path);
