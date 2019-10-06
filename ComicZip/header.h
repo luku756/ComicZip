@@ -12,10 +12,11 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <algorithm>
 
 using namespace std;
 
 
 
 void zipFolder(string path, string name);
-void findFileList(string path, string name);
+string findFileList(string path, string name);
