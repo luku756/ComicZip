@@ -1,5 +1,12 @@
 #include "header.h"
 
+#define MODE_ALL 1
+#define MODE_SPECIFIC 2
+
+//드래그-드랍 없이 사용할 경우 모든 폴더를 탐색(MODE_ALL)
+//드래그-드랍으로 특정 폴더만 탐색할 경우(MODE_SPECIFIC)
+int mode = MODE_ALL;
+
 int main(int argc, char* argv[]) {
 
 	if (argc == 1) {//추가 파일 드래그-드랍 없음
@@ -7,11 +14,12 @@ int main(int argc, char* argv[]) {
 		findFileList("", "");
 	}
 	else {//폴더 드래그-드랍 시 해당 폴더 내용을 탐색. 건드리면 안 되는 파일(임시파일 등)이 섞여있을 때 원하는 폴더만 압축.
-
+		mode = MODE_SPECIFIC;
 		for (int i = 1; i < argc; i++) {
 			printf("run for there.\n%s\n",argv[i]);
 			string path = argv[i];
 			findFileList(path + "\\", "");//폴더가 아닐 경우 해당 위치에 파일이 없으니 무시되지만, 폴더일 경우 탐색된다.
+			findBadName(path + "\\", "");
 		}
 	}
 
@@ -109,24 +117,67 @@ string findFileList(string path, string name) {
 			dir_count++;
 			returnName = findFileList(path + str + "\\", str);
 
-			allNameList.push_back(returnName);
+			if (mode == MODE_ALL) {//MODE_SPECIFIC 의 경우, 후에 따로 불편한 이름을 탐색한다. 중복 탐색 방지
+				allNameList.push_back(returnName);
 
-			if (badNameCheck(returnName)) {//불편한 이름일 때
-				badNameList.push_back(returnName);
+				if (badNameCheck(returnName)) {//불편한 이름일 때
+					badNameList.push_back(returnName);
+				}
 			}
-
 		}
 		bResult = FindNextFile(hSearch, &wfd);
 	} while (bResult);
 	FindClose(hSearch);
 
 	if (dir_count == 0 && image_count > 0) {//leaf node. 안쪽에 폴더 없음.
-
-
 		printf("find comic folder. zip %s\n",name.c_str());
 		zipFolder(path, name);
 	}
 
+	if (mode == MODE_ALL) {
+		nameChange(allNameList, badNameList, path);	//불편한 이름 (-2화 , .5화) 변경
+	}
+	return name;
+}
+
+//이미 기존에 존재하던 폴더를 보고, 불편한 이름이 있을 경우 찾아서 변경한다.
+string findBadName(string path, string name) {
+
+	string returnName;
+	vector<string> allNameList;	//전체 파일 이름 명단.
+	vector<string> badNameList;	//불편한 파일 이름 명단.
+
+	HANDLE hSearch;
+	WIN32_FIND_DATA wfd;
+	bool bResult = true;
+
+	//모든 파일 검색
+	hSearch = FindFirstFile((path + "*").c_str(), &wfd);	//현재 경로에서부터.
+	do {
+		string str = string(wfd.cFileName);
+		string format;	//확장자 검출
+		int index = str.find_last_of(".");
+		if (index > 0) {	//폴더나 일부 경우 확장자 없음
+			format = str.substr(str.find_last_of(".") + 1);
+			transform(format.begin(), format.end(), format.begin(), tolower);//소문자화. 파일명이 .ZIP 일 경우를 대비
+			
+			if (format == "zip") {
+				string filename = str.substr(0, str.size() - 4);	//.zip을 뺀 이름
+				allNameList.push_back(filename);
+
+				if (badNameCheck(filename)) {//불편한 이름일 때
+					badNameList.push_back(filename);
+				}
+			}
+		}
+
+		if (wfd.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY && (strcmp(".", wfd.cFileName) != 0) && (strcmp("..", wfd.cFileName) != 0)) {//폴더만. 현재나 상위 폴더는 X. 폴더는 재귀로 들어간다
+			findBadName(path + str + "\\", str);
+		}
+		bResult = FindNextFile(hSearch, &wfd);
+	} while (bResult);
+	FindClose(hSearch);
+	
 	nameChange(allNameList, badNameList, path);	//불편한 이름 (-2화 , .5화) 변경
 
 	return name;
