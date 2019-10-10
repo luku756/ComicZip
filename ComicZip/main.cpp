@@ -1,8 +1,19 @@
 #include "header.h"
 
-int main() {
+int main(int argc, char* argv[]) {
 
-	findFileList("","");
+	if (argc == 1) {//추가 파일 드래그-드랍 없음
+		printf("run for here.\n");
+		findFileList("", "");
+	}
+	else {//폴더 드래그-드랍 시 해당 폴더 내용을 탐색. 건드리면 안 되는 파일(임시파일 등)이 섞여있을 때 원하는 폴더만 압축.
+
+		for (int i = 1; i < argc; i++) {
+			printf("run for there.\n%s\n",argv[i]);
+			string path = argv[i];
+			findFileList(path + "\\", "");//폴더가 아닐 경우 해당 위치에 파일이 없으니 무시되지만, 폴더일 경우 탐색된다.
+		}
+	}
 
 }
 
@@ -64,6 +75,7 @@ void nameChange(vector<string> allNameList, vector<string> badNameList, string p
 
 }
 
+//path : 경로, name : 폴더명(만화 폴더 이름 - xxx24화 등)
 string findFileList(string path, string name) {
 
 	string returnName;
