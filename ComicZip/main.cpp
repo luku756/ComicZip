@@ -183,6 +183,8 @@ string findBadName(string path, string name) {
 	return name;
 }
 
+
+
 void zipFolder(string path, string name) {
 
 	char searchPath[500], zipPath[500], dirPath[500], targetPath[500], filePath[500];
@@ -205,16 +207,28 @@ void zipFolder(string path, string name) {
 	//zip제작
 	hz = CreateZip(zipPath, 0);
 
-
+	int flag_last = 0;
 	//모든 파일 검색
 	hSearch = FindFirstFile(searchPath, &wfd);
 	do {
+		if (flag_last != 0) {
+			ZipAdd(hz, wfd.cFileName, targetPath);
+		}
+		flag_last = 0;
 		//압축(압축폴더 안에 추가)
 		sprintf(&targetPath[len], "%s", wfd.cFileName);
-		ZipAdd(hz, wfd.cFileName, targetPath);
+
+		int fsize = (wfd.nFileSizeHigh * (MAXDWORD + 1)) + wfd.nFileSizeLow;
+		if (fsize != 16293) {
+			ZipAdd(hz, wfd.cFileName, targetPath);
+			flag_last = 1;
+		}
 		DeleteFile(targetPath);
 		bResult = FindNextFile(hSearch, &wfd);
 	} while (bResult);
+
+
+
 	FindClose(hSearch);
 
 	//압축종료
