@@ -83,16 +83,21 @@ void nameChange(vector<string> allNameList, vector<string> badNameList, string p
 
 }
 
+//폴더 앞에 붙은 작가명을 삭제. [~~]
+//작가명이 아닌데 앞에 붙는 경우는 없다고 가정.
 void removeArtistName(string path, string& name) {
-	int a = name.find("]");
-	if (a > 0) {
-		string st = name.substr(a + 2);
-		printf("Rename Derectory : %s -> %s\n", name.c_str(), st.c_str());
-		string s1 = path + name;
-		string s2 = path + st;
+	int end = name.find("]");
+	if (end > 0) {
+		int st = name.find("[");
+		if (st == 0) {
+			string st = name.substr(end + 2);
+			printf("Rename Derectory : %s -> %s\n", name.c_str(), st.c_str());
+			string s1 = path + name;
+			string s2 = path + st;
 
-		int s = rename((path + name).c_str(), (path + st).c_str());
-		name = st;
+			int s = rename((path + name).c_str(), (path + st).c_str());
+			name = st;
+		}
 	}
 }
 
