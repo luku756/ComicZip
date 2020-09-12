@@ -83,6 +83,19 @@ void nameChange(vector<string> allNameList, vector<string> badNameList, string p
 
 }
 
+void removeArtistName(string path, string& name) {
+	int a = name.find("]");
+	if (a > 0) {
+		string st = name.substr(a + 2);
+		printf("Rename Derectory : %s -> %s\n", name.c_str(), st.c_str());
+		string s1 = path + name;
+		string s2 = path + st;
+
+		int s = rename((path + name).c_str(), (path + st).c_str());
+		name = st;
+	}
+}
+
 //path : 경로, name : 폴더명(만화 폴더 이름 - xxx24화 등)
 string findFileList(string path, string name) {
 
@@ -115,6 +128,7 @@ string findFileList(string path, string name) {
 
 		if (wfd.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY && (strcmp(".", wfd.cFileName) != 0) && (strcmp("..", wfd.cFileName) != 0)) {//폴더만. 현재나 상위 폴더는 X. 폴더는 재귀로 들어간다
 			dir_count++;
+			removeArtistName(path,str);
 			returnName = findFileList(path + str + "\\", str);
 
 			if (mode == MODE_ALL) {//MODE_SPECIFIC 의 경우, 후에 따로 불편한 이름을 탐색한다. 중복 탐색 방지
@@ -131,6 +145,7 @@ string findFileList(string path, string name) {
 
 	if (dir_count == 0 && image_count > 0) {//leaf node. 안쪽에 폴더 없음.
 		printf("find comic folder. zip %s\n",name.c_str());
+		
 		zipFolder(path, name);
 	}
 
