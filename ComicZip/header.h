@@ -13,6 +13,8 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
+#include<map>
+#include <experimental/filesystem>
 
 using namespace std;
 
@@ -22,4 +24,6 @@ void zipFolder(string path, string name);
 string findFileList(string path, string name);
 bool badNameCheck(string filename);
 void nameChange(vector<string> allNameList, vector<string> badNameList, string path);
+map<string, bool> findExistComicList();
 string findBadName(string path, string name);
+void classifyComics(map<string, bool> exist_list);

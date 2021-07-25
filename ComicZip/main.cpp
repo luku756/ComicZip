@@ -1,5 +1,7 @@
 #include "header.h"
 
+namespace fs = std::experimental::filesystem::v1;
+
 #define MODE_ALL 1
 #define MODE_SPECIFIC 2
 
@@ -12,6 +14,8 @@ int main(int argc, char* argv[]) {
 	if (argc == 1) {//추가 파일 드래그-드랍 없음
 		printf("run for here.\n");
 		findFileList("", "");
+		map<string, bool> exist_list = findExistComicList();
+		classifyComics(exist_list);
 	}
 	else {//폴더 드래그-드랍 시 해당 폴더 내용을 탐색. 건드리면 안 되는 파일(임시파일 등)이 섞여있을 때 원하는 폴더만 압축.
 		mode = MODE_SPECIFIC;
@@ -156,6 +160,7 @@ string findFileList(string path, string name) {
 
 	if (mode == MODE_ALL) {
 		nameChange(allNameList, badNameList, path);	//불편한 이름 (-2화 , .5화) 변경
+		//printf("%s folder", name);
 	}
 	return name;
 }
@@ -203,8 +208,76 @@ string findBadName(string path, string name) {
 	return name;
 }
 
+//내가 이미 가지고 있는(관심있는) 만화 목록을 가져온다
+map<string, bool> findExistComicList() {
+
+	// 사용할 경로들
+	string path[2] = { "C:\\Users\\jsl\\Downloads\\hitomi_downloader_GUI_test\\hitomi_downloaded_manamoa\\000봄\\", "C:\\Users\\jsl\\Downloads\\hitomi_downloader_GUI_test\\hitomi_downloaded_manamoa\\!temp\\" };
+	HANDLE hSearch;
+	WIN32_FIND_DATA wfd;
+	bool bResult = true;
+	map<string, bool> exist_list;
+
+	for (int i = 0; i < 2; i++) {
+		//모든 파일 검색
+		hSearch = FindFirstFile((path[i] + "*").c_str(), &wfd);	//현재 경로에서부터.
+		do {
+			string str = string(wfd.cFileName);
+
+			if (wfd.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY && (strcmp(".", wfd.cFileName) != 0) && (strcmp("..", wfd.cFileName) != 0)) {//폴더만. 현재나 상위 폴더는 X. 폴더는 재귀로 들어간다
+				//printf("%s\n", str.c_str());
+				exist_list[str] = true;
+			}
+			bResult = FindNextFile(hSearch, &wfd);
+		} while (bResult);
+		FindClose(hSearch);
+	}
+
+	return exist_list;
+}
+
+//만화 목록에 있는 만화의 위치를 옮긴다
+void classifyComics(map<string, bool> exist_list) {
+	//폴더 생성
+	CreateDirectory(".\\!temp", NULL);
+
+	HANDLE hSearch;
+	WIN32_FIND_DATA wfd;
+	bool bResult = true;
+
+	//모든 파일 검색
+	hSearch = FindFirstFile("*", &wfd);	//현재 경로에서부터.
+	do {
+		string str = string(wfd.cFileName);
+		//printf("%s\n", str.c_str());
+		//if (wfd.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY) {
+		//	if (exist_list[str] == true) {
+		//		printf("%s 는 있는 파일\n",str.c_str());
+		//	}
+		//	else
+		//		printf("%s 는 없는 파일\n", str.c_str());
+
+		//}
+		if (wfd.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY && (strcmp(".", wfd.cFileName) != 0) && (strcmp("..", wfd.cFileName) != 0)) {//폴더만. 현재나 상위 폴더는 X. 폴더는 재귀로 들어간다
+			//printf("%s\n", str.c_str());
+			if (exist_list[str] == true) {
+				printf("%s 는 선호작으로 분류\n", str.c_str());
+				fs::path filePath = str;
+				fs::path renamedPath = "!temp\\"+ str;
+				fs::rename(filePath, renamedPath);
+
+			}
+			//exist_list[str] = true;
+		}
+		bResult = FindNextFile(hSearch, &wfd);
+	} while (bResult);
+	FindClose(hSearch);
 
 
+
+}
+
+//폴더를 압축하고 원본 폴더를 삭제한다.
 void zipFolder(string path, string name) {
 
 	char searchPath[500], zipPath[500], dirPath[500], targetPath[500], filePath[500];
